@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 import re
 import random
@@ -179,12 +180,41 @@ def MsgHandler():
         except Exception, e:
             logging.error(str(e))
 
+def exe():
+    import conf
+    vpath = conf.QRCode_PATH
+    qq = 0
+    if len(sys.argv) > 1:
+        vpath = sys.argv[1]
+    if len(sys.argv) > 2:
+        qq = sys.argv[2]
+
+    try:
+        qqLogin = Login(vpath, qq)
+    except Exception, e:
+        logging.critical(str(e))
+        os._exit(1)
+    errtime=0
+    while True:
+        try:
+            if errtime > 5:
+                break
+            MsgHandler()
+            time.sleep(checkFrequency)
+            errtime = 0
+        except Exception, e:
+            logging.error(str(e))
+            errtime = errtime + 1
+
 # -----------------
 # 主程序
 # -----------------
 
 if __name__ == "__main__":
-    vpath = './v.png'
+    image_dir = "image"
+    if not os.path.exists(image_dir):
+        os.makedir(image_dir)
+    vpath = os.path.join(image_dir, 'v.png')
     qq = 0
     if len(sys.argv) > 1:
         vpath = sys.argv[1]
