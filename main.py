@@ -42,7 +42,7 @@ if __name__ == '__main__':
     tornado.options.parse_command_line()
     app = tornado.web.Application(
         handlers=[(r'/', IndexHandler),
-            (r'/api/v1/get/qrcode/(.*?)', tornado.web.StaticFileHandler, dict(path=conf.IMAGE_DIR)),
+            (r'/api/v1/qrcode/(.*?)', tornado.web.StaticFileHandler, dict(path=conf.IMAGE_DIR)),
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
