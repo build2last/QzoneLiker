@@ -17,10 +17,17 @@ import conf
 
 define("port", default=8080, help="run on the given port", type=int)
 
+QQLIST = []
+
+
+def qq_encrypt(qq):
+    qq_str = str(qq)
+    return qq_str[0] + '*'*(len(qq_str)-2) + qq_str[-1]
+
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         if not os.path.isfile(conf.QRCode_PATH):
-            t = threading.Thread(target=QLiker.exe, args=())
+            t = threading.Thread(target=QLiker.exe, args=(QQLIST,))
             t.setDaemon(True)
             t.start()
         wait_count = 0
@@ -28,7 +35,8 @@ class IndexHandler(tornado.web.RequestHandler):
         #     wait_count += 1
         #     time.sleep(0.2)
         # self.set_header("Cache-Control", "no-cache")
-        self.render('index.html')
+        uidlist = map(qq_encrypt, QQLIST)
+        self.render('index.html', uidlist=uidlist)
 
 class LogHandler(tornado.web.RequestHandler):
     def get(self,input):
@@ -46,7 +54,7 @@ if __name__ == '__main__':
         ],
         template_path=os.path.join(os.path.dirname(__file__), "templates"),
         static_path=os.path.join(os.path.dirname(__file__), "static"),
-        debug=False
+        debug=True
     )
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)

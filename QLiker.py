@@ -180,15 +180,10 @@ def MsgHandler():
         except Exception, e:
             logging.error(str(e))
 
-def exe():
+def exe(QQLIST=[]):
     import conf
     vpath = conf.QRCode_PATH
     qq = 0
-    if len(sys.argv) > 1:
-        vpath = sys.argv[1]
-    if len(sys.argv) > 2:
-        qq = sys.argv[2]
-
     try:
         qqLogin = Login(vpath, qq)
     except Exception, e:
@@ -200,11 +195,15 @@ def exe():
             if errtime > 5:
                 break
             MsgHandler()
+            if UIN not in QQLIST:
+                QQLIST.append(UIN)
             time.sleep(checkFrequency)
             errtime = 0
         except Exception, e:
             logging.error(str(e))
             errtime = errtime + 1
+    if UIN in QQLIST:
+        QQLIST.remove(UIN)
 
 # -----------------
 # 主程序
