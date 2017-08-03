@@ -6,7 +6,7 @@ Pure Python project
 [![License](https://img.shields.io/badge/licence-GPL%203.0-brightgreen.svg)](https://github.com/build2last/QzoneLiker/blob/master/LICENSE)
 
 ## Declaration
-* It's a pure python project based on QzoneLiker(https://github.com/zeruniverse/QzoneLiker).
+* It's a pure python project based on [QzoneLiker](https://github.com/zeruniverse/QzoneLiker).
 * Added web interface with Tornado framework.
 * New daemo thread will be created on QLiker 's activation.
 
@@ -18,7 +18,7 @@ Run with:
 
 ## Requirements
 * Python 2.7
-* PyExecJS
+* PyExecJS and **JavaScript runtime needed**
 * Tornado
 
 **Pull Requests open**
