@@ -188,7 +188,8 @@ def exe(QQLIST=[]):
         qqLogin = Login(vpath, qq)
     except Exception, e:
         logging.critical(str(e))
-        os._exit(1)
+        # os._exit(1)
+        sys.exit(1)     # End the thread rather than process
     errtime=0
     while True:
         try:
