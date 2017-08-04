@@ -15,7 +15,7 @@ from tornado.options import define, options
 import QLiker
 import conf
 
-define("port", default=8080, help="run on the given port", type=int)
+define("port", default=conf.PORT, help="run on the given port", type=int)
 
 QQLIST = []
 
