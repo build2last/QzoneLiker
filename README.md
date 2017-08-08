@@ -14,7 +14,7 @@ Run with:
 > python main.py
 
 ## Function   
-+ 自动对空间说说内容点赞，每N秒刷新一次，以子线程的形式在后台挂机运行。
++ 自动对空间说说内容点赞，每N秒刷新一次，以子进程的形式在后台挂机运行
 
 ## Requirements
 * Python 2.7
