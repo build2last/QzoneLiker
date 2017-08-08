@@ -4,8 +4,7 @@
 import os
 import random
 import time
-import threading
-
+import multiprocessing
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
@@ -17,26 +16,18 @@ import conf
 
 define("port", default=conf.PORT, help="run on the given port", type=int)
 
-QQLIST = []
-
-
-def qq_encrypt(qq):
-    qq_str = str(qq)
-    return qq_str[0] + '*'*(len(qq_str)-2) + qq_str[-1]
+# 初始化删除残留的QRCode文件
+if os.path.exists(conf.QRCode_PATH):
+    os.remove(conf.QRCode_PATH)
 
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
+        global USER_LIST, QRCODE_CRUD_LOCK
+        # 存在二维码文件则不新创建子进程
         if not os.path.isfile(conf.QRCode_PATH):
-            t = threading.Thread(target=QLiker.exe, args=(QQLIST,))
-            t.setDaemon(True)
+            t = multiprocessing.Process(target=QLiker.exe, args=(QRCODE_CRUD_LOCK, USER_LIST))
             t.start()
-        wait_count = 0
-        # while not os.path.isfile(conf.QRCode_PATH) and wait_count<3:
-        #     wait_count += 1
-        #     time.sleep(0.2)
-        # self.set_header("Cache-Control", "no-cache")
-        uidlist = map(qq_encrypt, QQLIST)
-        self.render('index.html', uidlist=uidlist)
+        self.render('index.html', uidlist=USER_LIST)
 
 class LogHandler(tornado.web.RequestHandler):
     def get(self,input):
@@ -47,6 +38,9 @@ class LogHandler(tornado.web.RequestHandler):
             self.write("No log yet!")
 
 if __name__ == '__main__':
+    QRCODE_CRUD_LOCK = multiprocessing.Lock()
+    MGR = multiprocessing.Manager()
+    USER_LIST = MGR.list()
     tornado.options.parse_command_line()
     app = tornado.web.Application(
         handlers=[(r'/', IndexHandler),

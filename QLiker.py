@@ -23,12 +23,12 @@ checkFrequency = 180
 # STOP EDITING HERE
 HttpClient_Ist = HttpClient()
 UIN = 0
+USERNAME = ''
 skey = ''
 Referer = 'https://user.qzone.qq.com/'
 QzoneLoginUrl = 'https://xui.ptlogin2.qq.com/cgi-bin/xlogin?proxy_url=https%3A//qzs.qq.com/qzone/v6/portal/proxy.html&daid=5&&hide_title_bar=1&low_login=0&qlogin_auto_login=1&no_verifyimg=1&link_target=blank&appid=549000912&style=22&target=self&s_url=https%3A%2F%2Fqzs.qq.com%2Fqzone%2Fv5%2Floginsucc.html%3Fpara%3Dizone&pt_qr_app=%E6%89%8B%E6%9C%BAQQ%E7%A9%BA%E9%97%B4&pt_qr_link=https%3A//z.qzone.com/download.html&self_regurl=https%3A//qzs.qq.com/qzone/v6/reg/index.html&pt_qr_help_link=https%3A//z.qzone.com/download.html&pt_no_auth=0'
 
 initTime = time.time()
-
 
 logging.basicConfig(filename='log.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 
@@ -63,7 +63,7 @@ class Login(HttpClient):
     MaxTryTime = 5
 
     def __init__(self, vpath, qq=0):
-        global UIN, Referer, skey
+        global UIN, Referer, skey, USERNAME
         self.VPath = vpath  # QRCode保存路径
         AdminQQ = int(qq)
         logging.critical("正在获取登陆页面")
@@ -93,13 +93,9 @@ class Login(HttpClient):
             return
         logging.critical("二维码已扫描，正在登陆")
         
-        # 删除QRCode文件
-        if os.path.exists(self.VPath):
-            os.remove(self.VPath)
-
         # 记录登陆账号的昵称
         tmpUserName = ret[11]
-
+        USERNAME = tmpUserName
         self.Get(ret[5])
         UIN = getReValue(ret[5], r'uin=([0-9]+?)&', 'Fail to get QQ number', 1)
         Referer = Referer+str(UIN)
@@ -180,31 +176,49 @@ def MsgHandler():
         except Exception, e:
             logging.error(str(e))
 
-def exe(QQLIST=[]):
+def exe(QRCode_CRUD_LOCK, user_list=[]):
+    """确保及时删除过期的二维码
+    """
+    global USERNAME
     import conf
-    vpath = conf.QRCode_PATH
     qq = 0
     try:
-        qqLogin = Login(vpath, qq)
+        qqLogin = Login(conf.QRCode_PATH, qq)       # qqlogin 函数执行结束后对应二维码应被删除
     except Exception, e:
         logging.critical(str(e))
+        # 删除QRCode文件
+        QRCode_CRUD_LOCK.acquire()
+        if os.path.exists(conf.QRCode_PATH):
+            os.remove(conf.QRCode_PATH)
+        QRCode_CRUD_LOCK.release()
         # os._exit(1)
-        sys.exit(1)     # End the thread rather than process
+        sys.exit(1)     # 程序出口 Exit:End the thread rather than process
+    finally:
+        QRCode_CRUD_LOCK.acquire()
+        # 删除QRCode文件
+        if os.path.exists(conf.QRCode_PATH):
+            os.remove(conf.QRCode_PATH)
+        QRCode_CRUD_LOCK.release()
     errtime=0
+    if USERNAME not in user_list:
+        user_list.append(USERNAME)
     while True:
         try:
             if errtime > 5:
                 break
             MsgHandler()
-            if UIN not in QQLIST:
-                QQLIST.append(UIN)
             time.sleep(checkFrequency)
             errtime = 0
         except Exception, e:
             logging.error(str(e))
             errtime = errtime + 1
-    if UIN in QQLIST:
-        QQLIST.remove(UIN)
+    if USERNAME in user_list:
+        user_list.remove(USERNAME)
+    # 删除QRCode文件
+    QRCode_CRUD_LOCK.acquire()
+    if os.path.exists(conf.QRCode_PATH):
+        os.remove(conf.QRCode_PATH)
+    QRCode_CRUD_LOCK.release()
 
 # -----------------
 # 主程序
