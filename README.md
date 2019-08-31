@@ -18,8 +18,14 @@ Run with:
 + 自动对空间说说内容点赞，每N秒刷新一次，以子进程的形式在后台挂机运行
 
 ## Requirements
-* Python 2.7
-* PyExecJS and **JavaScript runtime needed**
+* Python 3
+* PyExecJS
+* **JavaScript runtime** 环境变量
 * Tornado
 
-**Pull Requests open**
+## 2019-09 开发计划
+[] 向 Python 3 升级，兼容 python 2.7
+[] 代码重构
+[] 白名单 / 黑名单 功能
+[] 日志精简
+[] 稳定性测试 / 容量测试

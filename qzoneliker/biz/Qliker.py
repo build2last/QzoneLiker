@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+
 
 import re
 import random
@@ -11,13 +11,12 @@ import time
 import threading
 import logging
 import execjs
-import urllib
-from HttpClient import HttpClient
-
-reload(sys)
-sys.setdefaultencoding("utf-8")
+import urllib.request, urllib.parse, urllib.error
+from core.HttpClient import HttpClient
+import imp
 
 # CONFIGURATION FIELD
+# TODO: 配置参数统一管理
 checkFrequency = 180
 #check every k seconds
 # STOP EDITING HERE
@@ -30,7 +29,11 @@ QzoneLoginUrl = 'https://xui.ptlogin2.qq.com/cgi-bin/xlogin?proxy_url=https%3A//
 
 initTime = time.time()
 
-logging.basicConfig(filename='log.log', level=logging.DEBUG, format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+logging.basicConfig(
+    stream=open('log.log', 'a+', encoding="utf-8"), level=logging.DEBUG,
+    format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+    datefmt='%a, %d %b %Y %H:%M:%S'
+)
 
 def getAbstime():
     return int(time.time())
@@ -45,7 +48,7 @@ def getReValue(html, rex, er, ex):
         logging.error(er)
 
         if ex:
-            raise Exception, er
+            raise Exception(er)
         return ''
 
     return v.group(1)
@@ -68,19 +71,18 @@ class Login(HttpClient):
         AdminQQ = int(qq)
         logging.critical("正在获取登陆页面")
         self.setCookie('_qz_referrer','qzone.qq.com','qq.com')
-        self.Get(QzoneLoginUrl,'https://qzone.qq.com/')
+        self.Get(QzoneLoginUrl, 'https://qzone.qq.com/')
         StarTime = date_to_millis(datetime.datetime.utcnow())
         T = 0
         while True:
             T = T + 1
-
             self.Download('https://ssl.ptlogin2.qq.com/ptqrshow?appid=549000912&e=2&l=M&s=3&d=72&v=4&t=0.{0}6252926{1}2285{2}86&daid=5'.format(random.randint(0,9),random.randint(0,9),random.randint(0,9)), self.VPath)
             LoginSig = self.getCookie('pt_login_sig')
             QRSig = self.getCookie('qrsig')
             logging.info('[{0}] Get QRCode Picture Success.'.format(T))           
             while True:
                 html = self.Get('https://ssl.ptlogin2.qq.com/ptqrlogin?u1=https%3A%2F%2Fqzs.qq.com%2Fqzone%2Fv5%2Floginsucc.html%3Fpara%3Dizone&ptqrtoken={0}&ptredirect=0&h=1&t=1&g=1&from_ui=1&ptlang=2052&action=0-0-{1}&js_ver=10220&js_type=1&login_sig={2}&pt_uistyle=40&aid=549000912&daid=5&'.format(getQRtoken(QRSig),date_to_millis(datetime.datetime.utcnow()) - StarTime, LoginSig), QzoneLoginUrl)
-                # logging.info(html)
+                html = html.decode("utf-8")
                 ret = html.split("'")
                 if ret[1] == '65' or ret[1] == '0':  # 65: QRCode 失效, 0: 验证成功, 66: 未失效, 67: 验证中
                     break
@@ -89,7 +91,7 @@ class Login(HttpClient):
                 break
 
         if ret[1] != '0':
-            raise ValueError, "RetCode = "+ret[1]
+            raise ValueError("RetCode = "+ret[1])
             return
         logging.critical("二维码已扫描，正在登陆")
         
@@ -154,10 +156,11 @@ def like(unikey,curkey,dataid,time,qztoken):
 # 主函数
 # ----------------- 
 def MsgHandler():
-    html=HttpClient_Ist.Get(Referer+'/infocenter?via=toolbar',Referer)
-    fkey=re.findall(r'<div class="f-item f-s-i" id=".*?" data-feedsflag=".*?" data-iswupfeed=".*?" data-key="(.*?)" data-specialtype=".*?" data-extend-info=".*?"',html)
+    html = HttpClient_Ist.Get(Referer+'/infocenter?via=toolbar', Referer)
+    html = html.decode("utf-8")
+    fkey = re.findall(r'<div class="f-item f-s-i" id=".*?" data-feedsflag=".*?" data-iswupfeed=".*?" data-key="(.*?)" data-specialtype=".*?" data-extend-info=".*?"',html)
     if not fkey:
-        raise Exception, 'Fail to find any feeds'
+        raise Exception('Fail to find any feeds')
     g_qzonetoken=re.search(r'window\.g_qzonetoken = \(function\(\)\{ try\{return (.*?);\} catch\(e\)',html)
     g_qzonetoken=g_qzonetoken.group(1)
     ctx = execjs.compile('function qz(){location = "./"; return '+g_qzonetoken+'}')
@@ -173,7 +176,7 @@ def MsgHandler():
                 continue
             like(btn_string.group(1),btn_string.group(2),fkey[i],abstime.group(1),qztoken)
             logging.info('已点赞'+btn_string.group(2))
-        except Exception, e:
+        except Exception as e:
             logging.error(str(e))
 
 def exe(QRCode_CRUD_LOCK, user_list=[]):
@@ -184,8 +187,8 @@ def exe(QRCode_CRUD_LOCK, user_list=[]):
     qq = 0
     try:
         qqLogin = Login(conf.QRCode_PATH, qq)       # qqlogin 函数执行结束后对应二维码应被删除
-    except Exception, e:
-        logging.critical(str(e))
+    except Exception as e:
+        logging.error(e)
         # 删除QRCode文件
         QRCode_CRUD_LOCK.acquire()
         if os.path.exists(conf.QRCode_PATH):
@@ -209,8 +212,8 @@ def exe(QRCode_CRUD_LOCK, user_list=[]):
             MsgHandler()
             time.sleep(checkFrequency)
             errtime = 0
-        except Exception, e:
-            logging.error(str(e))
+        except Exception as e:
+            logging.error(e)
             errtime = errtime + 1
     if USERNAME in user_list:
         user_list.remove(USERNAME)
@@ -237,8 +240,8 @@ if __name__ == "__main__":
 
     try:
         qqLogin = Login(vpath, qq)
-    except Exception, e:
-        logging.critical(str(e))
+    except Exception as e:
+        logging.error(e)
         os._exit(1)
     errtime=0
     while True:
@@ -248,6 +251,6 @@ if __name__ == "__main__":
             MsgHandler()
             time.sleep(checkFrequency)
             errtime = 0
-        except Exception, e:
+        except Exception as e:
             logging.error(str(e))
             errtime = errtime + 1

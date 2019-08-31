@@ -1,5 +1,8 @@
 # coding:utf-8
-# REST practice for Qzone Liker bot to activate program
+''' Front end for Qzone Liker bot to activate program
+
+author: build2last
+'''
 
 import os
 import random
@@ -11,7 +14,7 @@ import tornado.options
 import tornado.web
 
 from tornado.options import define, options
-import QLiker
+import biz.Qliker as Qliker
 import conf
 
 define("port", default=conf.PORT, help="run on the given port", type=int)
@@ -25,7 +28,7 @@ class IndexHandler(tornado.web.RequestHandler):
         global USER_LIST, QRCODE_CRUD_LOCK
         # 存在二维码文件则不新创建子进程
         if not os.path.isfile(conf.QRCode_PATH):
-            t = multiprocessing.Process(target=QLiker.exe, args=(QRCODE_CRUD_LOCK, USER_LIST))
+            t = multiprocessing.Process(target=Qliker.exe, args=(QRCODE_CRUD_LOCK, USER_LIST))
             t.start()
         self.render('index.html', uidlist=USER_LIST)
 

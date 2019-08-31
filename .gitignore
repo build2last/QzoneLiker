@@ -62,3 +62,5 @@ target/
 .ipynb_checkpoints
 *.json
 image/v.png
+
+vscode/
