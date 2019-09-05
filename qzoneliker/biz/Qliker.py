@@ -30,7 +30,7 @@ QzoneLoginUrl = 'https://xui.ptlogin2.qq.com/cgi-bin/xlogin?proxy_url=https%3A//
 initTime = time.time()
 
 logging.basicConfig(
-    stream=open('log.log', 'a+', encoding="utf-8"), level=logging.DEBUG,
+    stream=open('log.log', 'a+', encoding="utf-8"), level=logging.INFO,
     format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
     datefmt='%a, %d %b %Y %H:%M:%S'
 )

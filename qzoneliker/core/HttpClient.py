@@ -9,7 +9,7 @@ import logging
 import http.cookiejar as cookielib
 
 logging.basicConfig(
-    stream=open('HttpClient.log', 'a+', encoding="utf-8"), level=logging.DEBUG,
+    stream=open('HttpClient-error.log', 'a+', encoding="utf-8"), level=logging.ERROR,
     format='%(asctime)s  %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
     datefmt='%a, %d %b %Y %H:%M:%S',
 )
